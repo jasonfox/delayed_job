@@ -230,6 +230,13 @@ module Delayed
         handler = YAML.load(source)
       end
 
+      # give the job the worker's logger
+      handler.class_eval do
+        def logger
+          Delayed::Worker.logger
+        end
+      end
+
       return handler if handler.respond_to?(:perform)
 
       raise DeserializationError,
