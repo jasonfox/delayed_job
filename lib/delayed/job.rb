@@ -141,6 +141,8 @@ module Delayed
       if self.queue 
         sql << ' AND (job_queue = ?)'
         conditions << queue
+      else
+        sql << ' AND (job_queue is null)'
       end
 
       conditions.unshift(sql)

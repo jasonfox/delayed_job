@@ -289,14 +289,15 @@ describe Delayed::Job do
       SimpleJob.runs.should == 1
     end
     
-    it "should work_off all jobs if no name is specified" do
+    it "should work_off public jobs if no queue name is specified" do
       Delayed::Job.enqueue SimpleJob.new, 0, Time.now, "simple_jobs"
       Delayed::Job.enqueue SimpleJob.new, 0, Time.now, "other_jobs"
-
+      Delayed::Job.enqueue SimpleJob.new, 0
+      
       Delayed::Job.queue = nil
       Delayed::Job.work_off
 
-      SimpleJob.runs.should == 2
+      SimpleJob.runs.should == 1
     end
   end
   
