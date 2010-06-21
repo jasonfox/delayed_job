@@ -21,7 +21,8 @@ end
 describe Delayed::Job do
   before  do               
     Delayed::Job.max_priority = nil
-    Delayed::Job.min_priority = nil      
+    Delayed::Job.min_priority = nil
+    Delayed::Job.queue        = nil
     
     Delayed::Job.delete_all
   end
@@ -69,8 +70,12 @@ describe Delayed::Job do
 
     SimpleJob.runs.should == 1
   end
-                     
-                     
+  
+  it "should be able to specify a named queue when enqueuing items" do
+    Delayed::Job.enqueue SimpleJob.new, 0, Time.now, "simple_jobs"
+    Delayed::Job.first.job_queue.should == "simple_jobs"
+  end
+  
   it "should work with eval jobs" do
     $eval_job_ran = false
 
@@ -271,6 +276,28 @@ describe Delayed::Job do
       SimpleJob.runs.should == 1
     end                         
    
+  end
+  
+  context "named queues" do
+    it "should only work_off jobs for the specified named queue" do
+      Delayed::Job.enqueue SimpleJob.new, 0, Time.now, "simple_jobs"
+      Delayed::Job.enqueue SimpleJob.new, 0, Time.now, "other_jobs"
+
+      Delayed::Job.queue = "simple_jobs"
+      Delayed::Job.work_off
+
+      SimpleJob.runs.should == 1
+    end
+    
+    it "should work_off all jobs if no name is specified" do
+      Delayed::Job.enqueue SimpleJob.new, 0, Time.now, "simple_jobs"
+      Delayed::Job.enqueue SimpleJob.new, 0, Time.now, "other_jobs"
+
+      Delayed::Job.queue = nil
+      Delayed::Job.work_off
+
+      SimpleJob.runs.should == 2
+    end
   end
   
   context "when pulling jobs off the queue for processing, it" do

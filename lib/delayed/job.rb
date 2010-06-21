@@ -27,9 +27,10 @@ module Delayed
 
     ParseObjectFromYaml = /\!ruby\/\w+\:([^\s]+)/
 
-    cattr_accessor :min_priority, :max_priority
+    cattr_accessor :min_priority, :max_priority, :queue
     self.min_priority = nil
     self.max_priority = nil
+    self.queue        = nil
 
     # When a worker is exiting, make sure we don't have any locked jobs.
     def self.clear_locks!
@@ -109,11 +110,12 @@ module Delayed
       unless object.respond_to?(:perform) || block_given?
         raise ArgumentError, 'Cannot enqueue items which do not respond to perform'
       end
-    
-      priority = args.first || 0
-      run_at   = args[1]
 
-      Job.create(:payload_object => object, :priority => priority.to_i, :run_at => run_at)
+      priority   = args.first || 0
+      run_at     = args[1]
+      queue      = args[2]
+
+      Job.create(:payload_object => object, :priority => priority.to_i, :run_at => run_at, :job_queue => queue)
     end
 
     # Find a few candidate jobs to run (in case some immediately get locked by others).
@@ -134,6 +136,11 @@ module Delayed
       if self.max_priority
         sql << ' AND (priority <= ?)'
         conditions << max_priority
+      end
+      
+      if self.queue 
+        sql << ' AND (job_queue = ?)'
+        conditions << queue
       end
 
       conditions.unshift(sql)
