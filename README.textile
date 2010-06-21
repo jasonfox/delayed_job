@@ -31,7 +31,7 @@ The created table looks as follows:
     table.datetime      :locked_at                    # Set when a client is working on this object
     table.datetime      :failed_at                    # Set when all retries have failed (actually, by default, the record is deleted instead)
     table.string        :locked_by                    # Who is working on this object (if locked)
-    table.job_queue     :string                       # Name of the job queue (if using named queues)
+    table.string        :job_queue                    # Name of the job queue (if using named queues)
     table.timestamps
   end
 </code></pre>
@@ -108,6 +108,14 @@ Note: The rake task will exit if the database has any network connectivity probl
 h3. Cleaning up
 
 You can invoke @rake jobs:clear@ to delete all jobs in the queue.
+
+h3. Named Queues
+
+You can now submit jobs to a specific named queue and start workers that will only work off jobs in that queue. This feature is useful if you have jobs that you'd like to segment off onto a separate server.
+<pre><code>
+  >> Delayed::Job.enqueue SimpleJob.new, 0, Time.now, "simple_jobs"
+  >> Delayed::Worker.new(:queue => "simple_jobs").start
+</code></pre>
 
 h3. Changes
 
